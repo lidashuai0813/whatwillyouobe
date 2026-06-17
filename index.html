@@ -1,22 +1,430 @@
-ELAPSED
-Since June 16, 2026 00:00
-0
-DAYS
-00
-HOURS
-00
-MINUTES
-00
-SECONDS
-COUNTDOWN
-To selected date and time
-Settings
-0
-DAYS
-00
-HOURS
-00
-MINUTES
-00
-SECONDS
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>计时器</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #000;
+      --ink: #f4f7f5;
+      --muted: #8d9994;
+      --accent: #65f0c2;
+      --accent-soft: rgba(101, 240, 194, 0.12);
+      --warning: #ff9d72;
+    }
 
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: clamp(10px, 2.5vw, 22px);
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    main {
+      width: min(880px, 100%);
+      display: grid;
+      gap: 12px;
+    }
+
+    section {
+      padding: 0;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    h1,
+    h2,
+    p {
+      margin: 0;
+    }
+
+    h1,
+    h2 {
+      font-size: 13px;
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: clamp(8px, 2vw, 18px);
+    }
+
+    .unit {
+      min-width: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .value {
+      display: block;
+      min-height: 1.05em;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(38px, 11vw, 92px);
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .label {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+      text-transform: uppercase;
+    }
+
+    .countdown {
+      margin-top: 0;
+      opacity: 0.78;
+    }
+
+    .countdown .section-head {
+      margin-bottom: 6px;
+    }
+
+    .countdown .time-grid {
+      gap: clamp(8px, 2vw, 16px);
+    }
+
+    .countdown .value {
+      font-size: clamp(22px, 5vw, 36px);
+      font-weight: 750;
+    }
+
+    .countdown .label {
+      margin-top: 4px;
+      font-size: 11px;
+    }
+
+    .controls {
+      display: none;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .controls.is-open {
+      display: grid;
+    }
+
+    input,
+    button {
+      min-height: 36px;
+      border-radius: 6px;
+      font: inherit;
+    }
+
+    input {
+      width: 100%;
+      border: 0;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #151a18;
+    }
+
+    input:focus {
+      outline: 2px solid var(--accent-soft);
+    }
+
+    button {
+      border: 0;
+      padding: 0 12px;
+      color: var(--ink);
+      background: var(--accent-soft);
+      font-size: 12px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: rgba(101, 240, 194, 0.2);
+    }
+
+    .head-action {
+      min-height: auto;
+      margin-left: auto;
+      padding: 4px 8px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+    }
+
+    .status {
+      min-height: 18px;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .status.done {
+      color: var(--warning);
+      font-weight: 700;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 560px) {
+      body {
+        padding: 10px;
+      }
+
+      .section-head {
+        display: grid;
+      }
+
+      .head-action {
+        margin-left: 0;
+        justify-self: start;
+      }
+
+      .controls.is-open {
+        display: grid;
+      }
+
+      .time-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .value {
+        font-size: clamp(36px, 19vw, 66px);
+      }
+
+      .countdown .value {
+        font-size: clamp(22px, 10vw, 36px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main aria-label="计时器">
+    <section aria-labelledby="elapsed-title">
+      <div class="section-head">
+        <h1 id="elapsed-title">Elapsed</h1>
+        <p class="meta">Since June 16, 2026 00:00</p>
+      </div>
+      <div class="time-grid" aria-live="polite">
+        <div class="unit">
+          <span class="value" id="elapsed-days">0</span>
+          <span class="label">Days</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="elapsed-hours">00</span>
+          <span class="label">Hours</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="elapsed-minutes">00</span>
+          <span class="label">Minutes</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="elapsed-seconds">00</span>
+          <span class="label">Seconds</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="countdown" aria-labelledby="countdown-title">
+      <div class="section-head">
+        <h2 id="countdown-title">Countdown</h2>
+        <p class="meta">To selected date and time</p>
+        <button class="head-action" id="toggle-settings" type="button" aria-expanded="false" aria-controls="countdown-controls">Settings</button>
+      </div>
+      <div class="controls" id="countdown-controls">
+        <label>
+          <span class="sr-only">Target date and time</span>
+          <input id="target-input" type="datetime-local" step="1">
+        </label>
+        <button id="save-target" type="button">Start</button>
+      </div>
+      <div class="time-grid" aria-live="polite">
+        <div class="unit">
+          <span class="value" id="countdown-days">0</span>
+          <span class="label">Days</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="countdown-hours">00</span>
+          <span class="label">Hours</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="countdown-minutes">00</span>
+          <span class="label">Minutes</span>
+        </div>
+        <div class="unit">
+          <span class="value" id="countdown-seconds">00</span>
+          <span class="label">Seconds</span>
+        </div>
+      </div>
+      <p class="status" id="countdown-status"></p>
+    </section>
+  </main>
+
+  <script>
+    const START_AT = new Date(2026, 5, 16, 0, 0, 0);
+    const STORAGE_KEY = "feishu-timer-target";
+    const pad = (value) => String(value).padStart(2, "0");
+
+    const elapsedEls = {
+      days: document.querySelector("#elapsed-days"),
+      hours: document.querySelector("#elapsed-hours"),
+      minutes: document.querySelector("#elapsed-minutes"),
+      seconds: document.querySelector("#elapsed-seconds")
+    };
+
+    const countdownEls = {
+      days: document.querySelector("#countdown-days"),
+      hours: document.querySelector("#countdown-hours"),
+      minutes: document.querySelector("#countdown-minutes"),
+      seconds: document.querySelector("#countdown-seconds")
+    };
+
+    const targetInput = document.querySelector("#target-input");
+    const saveButton = document.querySelector("#save-target");
+    const toggleSettings = document.querySelector("#toggle-settings");
+    const countdownControls = document.querySelector("#countdown-controls");
+    const statusEl = document.querySelector("#countdown-status");
+
+    function splitDuration(totalMs) {
+      const totalSeconds = Math.max(0, Math.floor(totalMs / 1000));
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      return { days, hours, minutes, seconds };
+    }
+
+    function renderTime(parts, els) {
+      els.days.textContent = parts.days;
+      els.hours.textContent = pad(parts.hours);
+      els.minutes.textContent = pad(parts.minutes);
+      els.seconds.textContent = pad(parts.seconds);
+    }
+
+    function formatInputDate(date) {
+      return [
+        date.getFullYear(),
+        pad(date.getMonth() + 1),
+        pad(date.getDate())
+      ].join("-") + "T" + [
+        pad(date.getHours()),
+        pad(date.getMinutes()),
+        pad(date.getSeconds())
+      ].join(":");
+    }
+
+    function readTargetDate() {
+      const rawValue = localStorage.getItem(STORAGE_KEY);
+      if (!rawValue) return null;
+
+      const date = new Date(rawValue);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function setDefaultTarget() {
+      const savedDate = readTargetDate();
+      if (savedDate) {
+        targetInput.value = formatInputDate(savedDate);
+        return;
+      }
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(18, 0, 0, 0);
+      targetInput.value = formatInputDate(tomorrow);
+    }
+
+    function update() {
+      const now = new Date();
+      renderTime(splitDuration(now - START_AT), elapsedEls);
+
+      const targetDate = readTargetDate();
+      if (!targetDate) {
+        renderTime(splitDuration(0), countdownEls);
+        statusEl.textContent = "Choose a target time in Settings.";
+        statusEl.classList.remove("done");
+        return;
+      }
+
+      const remaining = targetDate - now;
+      renderTime(splitDuration(remaining), countdownEls);
+
+      if (remaining <= 0) {
+        statusEl.textContent = "Countdown finished.";
+        statusEl.classList.add("done");
+      } else {
+        statusEl.textContent = "Target: " + targetDate.toLocaleString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        });
+        statusEl.classList.remove("done");
+      }
+    }
+
+    saveButton.addEventListener("click", () => {
+      if (!targetInput.value) return;
+      localStorage.setItem(STORAGE_KEY, new Date(targetInput.value).toISOString());
+      update();
+    });
+
+    targetInput.addEventListener("change", () => {
+      if (!targetInput.value) return;
+      localStorage.setItem(STORAGE_KEY, new Date(targetInput.value).toISOString());
+      update();
+    });
+
+    toggleSettings.addEventListener("click", () => {
+      const isOpen = countdownControls.classList.toggle("is-open");
+      toggleSettings.setAttribute("aria-expanded", String(isOpen));
+    });
+
+    setDefaultTarget();
+    update();
+    window.setInterval(update, 1000);
+  </script>
+</body>
+</html>
